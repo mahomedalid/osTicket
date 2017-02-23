@@ -165,10 +165,8 @@ class Thread {
     }
 
     function addResponse($vars, &$errors) {
-
         $vars['ticketId'] = $this->getTicketId();
         $vars['userId'] = 0;
-
         return Response::create($vars, $errors);
     }
 
@@ -1117,8 +1115,8 @@ class ThreadEntry {
             .' ,staff_id='.db_input($vars['staffId'])
             .' ,user_id='.db_input($vars['userId'])
             .' ,poster='.db_input($poster)
+	    . (isset($vars['info']) ? ' ,info='.db_input($vars['info']) : '')
             .' ,source='.db_input($vars['source']);
-
         if (!isset($vars['attachments']) || !$vars['attachments'])
             // Otherwise, body will be configured in a block below (after
             // inline attachments are saved and updated in the database)
@@ -1136,7 +1134,6 @@ class ThreadEntry {
         if($vars['ip_address'])
             $sql.=' ,ip_address='.db_input($vars['ip_address']);
 
-        //echo $sql;
         if(!db_query($sql) || !($entry=self::lookup(db_insert_id(), $vars['ticketId'])))
             return false;
 
@@ -1290,6 +1287,7 @@ class Response extends ThreadEntry {
 
         $vars['type'] = 'R';
         $vars['body'] = $vars['response'];
+	$vars['info'] = json_encode(['email_recipients' => $vars['email_recipients']]);
         if(!$vars['pid'] && $vars['msgId'])
             $vars['pid'] = $vars['msgId'];
 
@@ -1297,8 +1295,8 @@ class Response extends ThreadEntry {
                 && $vars['staffId']
                 && ($staff = Staff::lookup($vars['staffId'])))
             $vars['poster'] = (string) $staff->getName();
-
-        return ThreadEntry::add($vars);
+        $return = ThreadEntry::add($vars);
+	return $return;
     }
 
 

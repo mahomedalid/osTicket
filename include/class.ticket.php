@@ -255,6 +255,10 @@ class Ticket {
         return $this->ht['user_id'];
     }
 
+    function getInvestedTime() {
+     	return $this->ht['total_invested_time'];
+    }
+
     function getOwner() {
 
         if (!isset($this->owner)
@@ -852,6 +856,15 @@ class Ticket {
         return (db_query($sql)  && db_affected_rows());
     }
 
+    public function addInvestedTime($time)
+    {
+	$time = (float)$time;
+	$time = $this->getInvestedTime() + $time;
+	$sql = "UPDATE " . TICKET_TABLE . " SET total_invested_time = " . $time;
+	$sql.=' WHERE ticket_id='.db_input($this->getId());
+        return (db_query($sql) && !db_affected_rows());
+    }
+
     //Status helper.
     function setStatus($status, $comments='', $set_closing_agent=true) {
         global $thisstaff;
@@ -1133,7 +1146,7 @@ class Ticket {
      *
      */
 
-    function  notifyCollaborators($entry, $vars = array()) {
+    function notifyCollaborators($entry, $vars = array()) {
         global $cfg;
 
         if (!$entry instanceof ThreadEntry
@@ -1170,13 +1183,11 @@ class Ticket {
                     'poster' => $poster ?: _S('A collaborator'),
                     )
                 );
-
         $msg = $this->replaceVars($msg->asArray(), $vars);
-
         $attachments = $cfg->emailAttachments()?$entry->getAttachments():array();
         $options = array('inreplyto' => $entry->getEmailMessageId(),
                          'thread' => $entry);
-        foreach ($recipients as $recipient) {
+	foreach ($recipients as $recipient) {
             // Skip folks who have already been included on this part of
             // the conversation
             if (isset($skip[$recipient->getUserId()]))
@@ -1184,7 +1195,7 @@ class Ticket {
             $notice = $this->replaceVars($msg, array('recipient' => $recipient));
             $email->send($recipient, $notice['subj'], $notice['body'], $attachments,
                 $options);
-        }
+        }die ();
 
         return;
     }
@@ -1991,6 +2002,15 @@ class Ticket {
         if (!$vars['ip_address'] && $_SERVER['REMOTE_ADDR'])
             $vars['ip_address'] = $_SERVER['REMOTE_ADDR'];
 
+        $recipients = [];
+        if ($alert && $vars['emailcollab']) {
+	    foreach($this->getRecipients() as $recipient) {
+	       $recipients[] = $recipient->getEmail();
+	    }
+        }
+
+        $vars['email_recipients'] = $recipients;
+
         if(!($response = $this->getThread()->addResponse($vars, $errors)))
             return null;
 
@@ -2000,6 +2020,9 @@ class Ticket {
                 && $vars['reply_status_id'] != $this->getStatusId())
             $this->setStatus($vars['reply_status_id']);
 
+	if (isset($vars['reply_invested_time'])) {
+	    $this->addInvestedTime($vars['reply_invested_time']);
+	}
         // Claim on response bypasses the department assignment restrictions
         if ($claim && $thisstaff && $this->isOpen() && !$this->getStaffId()
             && $cfg->autoClaimTickets()
@@ -2039,8 +2062,11 @@ class Ticket {
                     $variables + array('recipient' => $this->getOwner()));
 
             $attachments = $cfg->emailAttachments()?$response->getAttachments():array();
+
+     	    $options['cc'] = $recipients;
             $email->send($this->getOwner(), $msg['subj'], $msg['body'], $attachments,
                 $options);
+	    $vars['emailcollab'] = false;
         }
 
         if($vars['emailcollab'])

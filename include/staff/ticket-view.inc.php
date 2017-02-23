@@ -317,6 +317,10 @@ if($ticket->isOverdue())
                 <?php
                 }
                 ?>
+                <tr>
+                    <th><?php echo __('Invested time');?>:</th>
+                    <td><?php echo Format::hours($ticket->getInvestedTime()); ?></td>
+                </tr>
             </table>
         </td>
         <td width="50%">
@@ -401,6 +405,16 @@ $tcount+= $ticket->getNumNotes();
                         echo Format::truncate($entry['title'], 100); ?></span>
                     </span>
                     <span class="pull-right" style="white-space:no-wrap;display:inline-block">
+			<span style="vertical-align:middle; font-size: 90%;" class="faded">
+			<?php 
+				$extrainfo = $entry['info'];
+				if($extrainfo && $extrainfo = json_decode($extrainfo)) {
+					if(!empty($extrainfo->email_recipients)) {
+						echo "Enviado a: " . implode(', ', $extrainfo->email_recipients);
+					}
+				}
+			?>
+			</span>
                         <span style="vertical-align:middle;" class="textra"></span>
                         <span style="vertical-align:middle;"
                             class="tmeta faded title"><?php
@@ -607,6 +621,15 @@ print $response_form->getField('attachments')->render();
                         <?php echo sprintf(__('Department Signature (%s)'), Format::htmlchars($dept->getName())); ?></label>
                     <?php
                     } ?>
+                </td>
+            </tr>
+	    <tr>
+                <td width="120">
+                    <label><strong><?php echo __('Invested Time'); ?>:</strong></label>
+                </td>
+                <td>
+		    <input type="number" name="reply_invested_time" step="0.01" size=6 /> hrs 
+			(tiempo invertido a la fecha: <?php echo $ticket->getInvestedTime() ?> hrs)
                 </td>
             </tr>
             <tr>

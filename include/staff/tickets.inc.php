@@ -66,6 +66,8 @@ $qwhere ='';
    User can also see tickets assigned to them regardless of the ticket's dept.
 */
 
+$custom_fields = ['tiempo' => ['formatCallback' => 'Format::hours'], 'tipo_servicio' => []];
+
 $depts=$thisstaff->getDepts();
 $qwhere =' WHERE ( '
         .'  ( ticket.staff_id='.db_input($thisstaff->getId())
@@ -254,7 +256,7 @@ $qselect.=' ,IF(ticket.duedate IS NULL,IF(sla.id IS NULL, NULL, DATE_ADD(ticket.
          .' ,ticket.created as ticket_created, CONCAT_WS(" ", staff.firstname, staff.lastname) as staff, team.name as team '
          .' ,IF(staff.staff_id IS NULL,team.name,CONCAT_WS(" ", staff.lastname, staff.firstname)) as assigned '
          .' ,IF(ptopic.topic_pid IS NULL, topic.topic, CONCAT_WS(" / ", ptopic.topic, topic.topic)) as helptopic '
-         .' ,cdata.priority as priority_id, cdata.subject, pri.priority_desc, pri.priority_color';
+         .' ,cdata.priority as priority_id, cdata.subject, pri.priority_desc, pri.priority_color, ticket.total_invested_time AS tiempo, cdata.tipo_servicio';
 
 $qfrom.=' LEFT JOIN '.TICKET_LOCK_TABLE.' tlock ON (ticket.ticket_id=tlock.ticket_id AND tlock.expire>NOW()
                AND tlock.staff_id!='.db_input($thisstaff->getId()).') '
@@ -390,6 +392,9 @@ if ($results) {
             <?php
             }
 
+		foreach($custom_fields as $custom => $custom_params) {
+			?><th width="150"><?php echo __($custom) ?></th><?php
+		}
             if($showassigned ) {
                 //Closed by
                 if(!strcasecmp($status,'closed')) { ?>
@@ -486,11 +491,19 @@ if ($results) {
                         $displaystatus="<b>$displaystatus</b>";
                     echo "<td>$displaystatus</td>";
                 } else { ?>
-                <td class="nohover" align="center" style="background-color:<?php echo $row['priority_color']; ?>;">
+                     <td class="nohover" align="center" style="background-color:<?php echo $row['priority_color']; ?>;">
                     <?php echo $row['priority_desc']; ?></td>
                 <?php
                 }
                 ?>
+	     <?php foreach($custom_fields as $custom => $custom_params) { 
+			if(isset($custom_params['formatCallback']) && is_callable($custom_params['formatCallback'])) {
+				$row[$custom] = call_user_func($custom_params['formatCallback'], $row[$custom]);
+			}
+		?>
+                     <td nowrap><?php echo $row[$custom]; ?></td>
+                <?php } ?>
+
                 <td nowrap>&nbsp;<?php echo $lc; ?></td>
             </tr>
             <?php

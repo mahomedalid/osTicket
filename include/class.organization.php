@@ -345,7 +345,7 @@ class Organization extends OrganizationModel {
         return $this->save();
     }
 
-    function delete() {
+    function delete($pk = false) {
         if (!parent::delete())
             return false;
 

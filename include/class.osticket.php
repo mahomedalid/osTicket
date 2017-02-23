@@ -54,7 +54,6 @@ class osTicket {
 
         require_once(INCLUDE_DIR.'class.config.php'); //Config helper
         require_once(INCLUDE_DIR.'class.company.php');
-
         $this->session = osTicketSession::start(SESSION_TTL); // start DB based session
 
         $this->config = new OsticketConfig();
@@ -610,7 +609,6 @@ class osTicket {
     function start() {
         // Prep basic translation support
         Internationalization::bootstrap();
-
         if(!($ost = new osTicket()))
             return null;
 

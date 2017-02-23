@@ -555,6 +555,11 @@ class Format {
         return date($format, ($gmtimestamp+ ($offset*3600)));
     }
 
+    function hours($time) {
+    	$hours = floor($time);$mins = ($time - $hours) * 60;
+        return $hours . ':' . sprintf('%02d', $mins);
+    }
+
     // Thanks, http://stackoverflow.com/a/2955878/1025836
     /* static */
     function slugify($text) {

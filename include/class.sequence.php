@@ -228,7 +228,7 @@ class RandomSequence extends Sequence {
         return $this->next($format);
     }
 
-    function save() {
+    function save($refetch = false) {
         throw new RuntimeException('RandomSequence is not database-backed');
     }
 }

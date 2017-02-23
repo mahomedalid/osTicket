@@ -263,6 +263,10 @@ class Mailer {
         // Add in the options passed to the constructor
         $options = ($options ?: array()) + $this->options;
 
+	if (isset($options['cc']) && $options['cc']) {
+	    $headers['Cc'] = implode(', ', (array)$options['cc']);
+	}
+
         if (isset($options['nobounce']) && $options['nobounce'])
             $headers['Return-Path'] = '<>';
         elseif ($this->getEmail() instanceof Email)
